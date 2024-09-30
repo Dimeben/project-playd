@@ -18,6 +18,8 @@ import {
   createUserWithEmailAndPassword,
   User as FirebaseUser,
 } from "firebase/auth";
+import firebase from "firebase/compat/app";
+export {firebase}
 
 const firebaseConfig = {
   apiKey: "AIzaSyDmik3S723nZR-fFM70ilaoAObfPCBKpGc",
@@ -30,7 +32,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+export const db = getFirestore(app);
 const auth = getAuth(app);
 
 onAuthStateChanged(auth, (user: FirebaseUser | null) => {
