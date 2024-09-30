@@ -4,6 +4,7 @@ import {
   getFirestore,
   doc,
   setDoc,
+  getDoc,
   query,
   getDocs,
   DocumentData,
@@ -32,6 +33,17 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+onAuthStateChanged(auth, (user: FirebaseUser | null) => {
+  if (user) {
+
+    console.log("Current logged-in user: ", user.uid);
+  } else {
+
+    console.log("No user is currently logged in.");
+  }
+});
+
+
 interface User {
   username: string;
   first_name: string;
@@ -42,58 +54,58 @@ interface User {
 interface DJ extends User {
   genre: string;
   Occasions: string;
-  Price: number;
+  Price: number;  
   Description: string;
 }
 
-const main = async () => {
-  const newUser: User = {
-    username: "dimeben",
-    first_name: "Ben",
-    surname: "McCarthy",
-    city: "Leeds",
-  };
+export function createUser(email: string, password:string , newUser: {email?: string, password?: string, city?: string, username?: string}) {
+  
+  return createUserWithEmailAndPassword(auth, email, password)
+     .then(async (userCredential) => {
+ 
+       const user = userCredential.user;
+       console.log(user.email)
+       console.log("Signed up: ", user.uid);
+ 
+       const usersRef = collection(db, "users");
+       await setDoc(doc(usersRef, user.uid), newUser);
+       
+       const userDocRef = doc(usersRef, user.uid);
+       const userDocSnapshot = await getDoc(userDocRef);
+       return userDocSnapshot.data()
+     })
+     .catch((error) => {
+       const errorCode = error.code;
+       const errorMessage = error.message;
+       console.error("Error: ", errorCode, errorMessage);
+     });
+ }
+ 
 
-  const usersRef = collection(db, "users");
-  await setDoc(doc(usersRef), newUser);
+export function createDJ(email: string, password:string , newDJ: {email?: string, password?: string, city?: string, username?: string, genre?: string, occasions?: string, price?: number, description?: string}) {
+  
+  return createUserWithEmailAndPassword(auth, email, password)
+     .then(async (userCredential) => {
+ 
+       const user = userCredential.user;
+       console.log(user.email)
+       console.log("Signed up: ", user.uid);
+ 
+       const djRef = collection(db, "djs");
+       await setDoc(doc(djRef, user.uid), newDJ);
+       
+       const djDocRef = doc(djRef, user.uid);
+       const djDocSnapshot = await getDoc(djDocRef);
+       return djDocSnapshot.data()
+     })
+     .catch((error) => {
+       const errorCode = error.code;
+       const errorMessage = error.message;
+       console.error("Error: ", errorCode, errorMessage);
+     });
+ }
 
-  const newDj: DJ = {
-    username: "megaDJ",
-    first_name: "David",
-    surname: "Smith",
-    city: "Leeds",
-    genre: "House",
-    Occasions: "Club Nights",
-    Price: 50,
-    Description: "I just love DJing!",
-  };
-
-  const djRef = collection(db, "djs");
-  await setDoc(doc(djRef), newDj);
-
-  const q1 = query(collection(db, "users"));
-  const usersArray: User[] = [];
-  const querySnapshot1: QuerySnapshot<DocumentData> = await getDocs(q1);
-  querySnapshot1.forEach((doc) => {
-    usersArray.push(doc.data() as User);
-  });
-
-  const q2 = query(collection(db, "djs"));
-  const djsArray: DJ[] = [];
-  const querySnapshot2: QuerySnapshot<DocumentData> = await getDocs(q2);
-  querySnapshot2.forEach((doc) => {
-    djsArray.push(doc.data() as DJ);
-  });
-
-  console.log(usersArray, djsArray);
-};
-
-main().catch((err) => console.error(err));
-
-function signInWithEmailPassword() {
-  const email = "hello@hello.com";
-  const password = "hunter2";
-
+export function signIn(email: string, password: string) {
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
       const user = userCredential.user;
@@ -106,39 +118,21 @@ function signInWithEmailPassword() {
     });
 }
 
-function signUpWithEmailPassword() {
-  const email = "hi@hello.com";
-  const password = "hunter2";
-
-  createUserWithEmailAndPassword(auth, email, password)
-    .then(async (userCredential) => {
-
-      const user = userCredential.user;
-      console.log("Signed up: ", user.uid);
-
-      const newUser = {
-        username: "dimeben",
-        first_name: "Ben",
-        surname: "McCarthy",
-        city: "Leeds",
-      };
-
-      const usersRef = collection(db, "users");
-      await setDoc(doc(usersRef, user.uid), newUser);
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      console.error("Error: ", errorCode, errorMessage);
-    });
+export async function getAllDjs() {
+  const allDjs = query(collection(db, "djs"));
+  const djsArray: DJ[] = [];
+  const getAllDjsSnapshot: QuerySnapshot<DocumentData> = await getDocs(allDjs);
+  getAllDjsSnapshot.forEach((doc) => {
+    djsArray.push(doc.data() as DJ);
+  });
+return djsArray
 }
 
-onAuthStateChanged(auth, (user: FirebaseUser | null) => {
-  if (user) {
+//   const q1 = query(collection(db, "users"));
+//   const usersArray: User[] = [];
+//   const querySnapshot1: QuerySnapshot<DocumentData> = await getDocs(q1);
+//   querySnapshot1.forEach((doc) => {
+//     usersArray.push(doc.data() as User);
+//   });
 
-    console.log("Current logged-in user: ", user.uid);
-  } else {
-
-    console.log("No user is currently logged in.");
-  }
-});
+// main().catch((err) => console.error(err));
